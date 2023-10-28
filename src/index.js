@@ -115,6 +115,7 @@ function cleanHScene(story) {
   document.getElementById('hs-container').innerHTML = ''
   document.getElementById('hs-container').innerHTML = 
   `<div id="hs-loading"></div>
+  <div id="logo" style="display: none;"><img src="./logo.png"></div>
   <audio id="hs-bgm" src="./assets/fkg_bgm_hscene001.mp3"></audio>
   <audio id="hs-voice"></audio>
   <img id="hs-scene"></img>
