@@ -59,7 +59,13 @@ export class Story {
     this.resMgr.onload = () => {
       document.getElementById("hs-loading").style.display = "none"
       this.el.style.opacity = 1
+      let throttleTimeout = null;
       this.wheelEvent = this.el.addEventListener("wheel", (evt) => {
+        if (throttleTimeout) {
+          // 如果上一个滚动并未处理完，简单地放弃这次滚动操作
+          return;
+         }
+        throttleTimeout = setTimeout(() => throttleTimeout = null, 300);  // 设置300ms的节流间隔
         this.pointer += Math.floor(evt.deltaY * 0.01 - 1)
         this.next(true)
       })
@@ -125,7 +131,6 @@ export class Story {
             `/voice/c/${current.voice.split("/")[0]}/${md5(current.voice.split("/")[1])}.mp3`
           )
           this.voiceEl.play()
-          console.log(document.getElementById("hs" + "-bgm"));
         }
         break
       case "effect":
