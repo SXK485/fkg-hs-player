@@ -61,16 +61,20 @@ export class Story {
       this.el.style.opacity = 1
       this.wheelEvent = this.el.addEventListener("wheel", (evt) => {
         this.pointer += Math.floor(evt.deltaY * 0.01 - 1)
-        this.next()
+        this.next(true)
       })
       this.clickEvent = this.el.addEventListener("click", () => {
-        if (this.hidden) {
-          this.dialogEl.style.opacity = 1
-          this.labelEl.style.opacity = 1
-          this.hidden = false
+        if(this.resMgr==null){
           return
+        }else{
+          if (this.hidden) {
+            this.dialogEl.style.opacity = 1
+            this.labelEl.style.opacity = 1
+            this.hidden = false
+            return
+          }
+          this.next(false)
         }
-        this.next()
       })
       this.contextEvent = this.el.addEventListener("contextmenu", (evt) => {
         if (this.hidden) {
@@ -84,6 +88,7 @@ export class Story {
         evt.preventDefault()
       })
 
+      if(this.dynamicCG == null) return
       this.dynamicCG && this.dynamicCG.init(
         this.resMgr.get(this.dynamicCG.skeletonURL).blob,
         this.resMgr.get(this.dynamicCG.atlasURL).blob
@@ -91,10 +96,13 @@ export class Story {
     }
   }
 
-  next() {
-    this.bgmEl.play()
+  next(isWheel) {
+    if(!isWheel){
+      this.bgmEl.play()
+    }
     if (this.pointer < 0) this.pointer = 0
     let current = this.messages[this.pointer]
+    if(current == null) return
     switch (current.type) {
       case "mess":
         if (current.name !== "") {
@@ -112,16 +120,19 @@ export class Story {
         }
 
         if (current.voice !== "") {
+          if(this.resMgr == null) break
           this.voiceEl.src = this.resMgr.getBlobUrl(
             `/voice/c/${current.voice.split("/")[0]}/${md5(current.voice.split("/")[1])}.mp3`
           )
           this.voiceEl.play()
+          console.log(document.getElementById("hs" + "-bgm"));
         }
         break
       case "effect":
         break
 
       case "image":
+        if(this.resMgr == null) break
         this.sceneEl.style.opacity = 0
         setTimeout(() => {
           this.sceneEl.src = `${this.resMgr.getBlobUrl(
@@ -131,11 +142,13 @@ export class Story {
         break
 
       case "spine":
+      	   if(this.dynamicCG == null) break
           this.spineEl.style.display = 'block'
           this.spineEl.appendChild(this.dynamicCG.app.view)
           this.dynamicCG.app.stage.interactive = true
         break
       case "spine_play":
+        if(this.dynamicCG == null) break
         if (this.dynamicCG.inited) {
           this.sceneEl.style.display = 'none'
           this.spineEl.style.display = 'block'
