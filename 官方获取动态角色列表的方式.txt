@@ -1,0 +1,114 @@
+介绍一下官方获取动态角色列表的方式。数据同样位于源为https://dugrqaqinbtcq.cloudfront.net的IndexedDB数据库。
+FTbKTVUXG3ZaGMBY.cache.allMasterData.data.masterCharacterBook，这里的book可以理解为名册，根据index.js的解读
+名册数据包含
+"enableFlag": 1,
+"enableValue": 0,
+"bookId": 8,
+"name": "ノヴァーリス",
+"bookNum": 8,
+"languageOfFlower": "神の祝福、不可能、奇跡",
+"secondSceneOpenFlag": false,
+"secondDateSceneOpenFlag": false,
+"heartFlag": 0,
+"deleteFlag": false,
+"specialDisplayFlag": 0
+等属性，比较重要的就是bookId(名册ID)、name(花名)、languageOfFlower(花语)、heartFlag(动态标志符)，
+应该是根据花名一一对应判断该角色是否有动态，使用以下代码可以输出角色名册：
+
+function setDataToDef() {
+  const dbName = 'FTbKTVUXG3ZaGMBY'
+  const tableName = 'cache'
+  const key = 'allMasterData'
+  const connection = indexedDB.open(dbName, 1);
+  console.log(connection)
+  connection.onsuccess = e => {
+  	console.log(e)
+    const db = e.target.result
+
+    console.log(db)
+
+    console.log("数据库操作成功！");
+
+    console.log(db.objectStoreNames)
+
+    db.transaction(tableName).objectStore(tableName).get(key).onsuccess = function(event) {
+      window.def = event.target.result
+      console.log(typeof(window.def))
+      console.log(window.def)
+      console.log(window.def.data)
+      console.log(JSON.stringify(window.def.data.masterCharacterBook))
+      window.charaData = purify(window.def.data.masterCharacterBook)
+        // copy(JSON.stringify(window.charaData))
+      console.log(JSON.stringify(window.charaData))
+      console.log(JSON.stringify(window.def.data))
+    };
+  }
+}
+
+setDataToDef()
+
+function purify(charaData) {
+  return charaData.split('\n').map(s => {
+    const record = s.split(',')
+    const enableFlag = +record[0]
+    const enableValue = +record[1]
+    const bookId = +record[2]
+    const name = record[3]?.replaceAll('"', '')
+    const bookNum = +record[4]
+    const languageOfFlower = record[5]?.replaceAll('"', '')
+    const secondSceneOpenFlag = 0 != +record[6]
+    const secondDateSceneOpenFlag = 0 != +record[7]
+    const heartFlag = +record[8]
+    const deleteFlag = !1
+    const specialDisplayFlag = +record[9]
+
+    return {
+      enableFlag,  
+      enableValue,
+      bookId,
+      name,
+      bookNum,
+      languageOfFlower,
+      secondSceneOpenFlag,
+      secondDateSceneOpenFlag,
+      heartFlag,
+      deleteFlag,
+      specialDisplayFlag
+    }
+  })
+}
+console.log(JSON.stringify(window.def))
+window.charaData = purify(window.def.data.masterCharacter)
+
+
+给这个函数打断点可以停在H场景入口：
+_0x56a4c1['prototype']['run'] = function() {
+                null == this['_currentScript'] ? _0x373154['scenedata']['SceneEventScript']['EventScriptEvent']['SCRIPT_COMPLETE']['dispatch']() : (!this['_firstRun'] && this['_hScene'] && this['_spineExists'] ? new _0x373154['scenes']['SceneDialogYesNoCloseV2'](_0x373154['util']['StringUtil']['substitute'](_0x373154['TEXT']['CONFIRM_HSCENE_ANIMATION']),!0x1)['open'](this, this['resultDialog']) : this['runProcess'](),
+                this['_firstRun'] || (this['_firstRun'] = !0x0));
+            }
+
+获取spine动画文件原始url：
+_0x1d0ac2['prototype']['getSpineURL'] = function() {
+                return _0x173eed['resourcemanager']['ResourceVersion']['AddVersion'](_0x173eed['resourcemanager']['ResourceURL']['spResourceDirectory'](this['spineLoadScriptData']['fileName'] + '.json'));
+            }
+            ;
+            _0x1d0ac2['prototype']['getAtlasURL'] = function() {
+                return _0x173eed['resourcemanager']['ResourceVersion']['AddVersion'](_0x173eed['resourcemanager']['ResourceURL']['spResourceDirectory'](this['spineLoadScriptData']['fileName'] + '.atlas'));
+            }
+            ;
+            _0x1d0ac2['prototype']['getTextureURL'] = function() {
+                for (var _0x1d0ac2 = [], _0x2058f4 = 0x1; _0x2058f4 <= this['spineLoadScriptData']['textureNum']; ++_0x2058f4) {
+                    var _0x53066b = _0x173eed['resourcemanager']['ResourceVersion']['AddVersion'](_0x173eed['resourcemanager']['ResourceURL']['spResourceDirectory'](this['spineLoadScriptData']['fileName'] + (0x1 === _0x2058f4 ? '' : '_' + _0x2058f4) + '.png'));
+                    _0x1d0ac2['push'](_0x53066b);
+                }
+                return _0x1d0ac2;
+            }
+
+以下地方打断点可以查看hash加密的url是怎么生成的：
+_0x2e51ef['add'](_0x548216['SPINE_KEY'], this['getURL'](_0x1d5a49['spineURL'], _0x1d5a49['spinePrefix']), _0x1ea932);
+                _0x1d5a49['atlasURL'] && _0x2e51ef['add'](_0x548216['ATLAS_KEY'], this['getURL'](_0x1d5a49['atlasURL'], _0x1d5a49['atlasPrefix']), _0x1ea932);
+                if (!_0x1d5a49['webp'] && _0x1d5a49['textureURL'])
+
+if (!0x0 === _0x1ea932['webp'] && _0x1ea932['textureURL'])
+
+if (!0x0 !== this['desc']['hash'])

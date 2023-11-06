@@ -21,7 +21,6 @@ const DATA = require('../dist/data.json')
     }
   }
 
-
   await fs.promises.writeFile('../dist/data.json', JSON.stringify(DATA, null, 4))
   console.log('finished.')
 

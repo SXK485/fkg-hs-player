@@ -1,5 +1,5 @@
 const DATA = require('../dist/data.json')
-const ids = DATA.charaData.map(e => e.id).filter(id => (id >= 110000 && id < 200000) || (id >= 410000))
+const ids = DATA.charaData.map(e => e.id).filter(id => (id >= 100000 && id < 200000) || (id >= 410000))
 
 const ThreadPool = require('./lib/threadpool.js')
 const download = require('./lib/download.js')

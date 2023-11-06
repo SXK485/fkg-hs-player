@@ -1,0 +1,70 @@
+如果你试图运行operation.txt文件里的代码，将代码复制粘贴到https://pc-play.games.dmm.com/网页下的控制台运行，发现会报错。
+
+实际上，名称为“FTbKTVUXG3ZaGMBY”的IndexedDB数据库，它的源是https://dugrqaqinbtcq.cloudfront.net，你不能从源为
+https://pc-play.games.dmm.com/的网页访问源为https://dugrqaqinbtcq.cloudfront.net的IndexedDB数据库，这就是同源策略(same-origin policy)
+而IndexedDB同样也遵守同源策略。
+所以当你试图运行代码，本域下不存在名为DB_NAME的数据库，indexedDB.open(dbName, 1)会创建一个名为dbName、版本号为1的数据库; 
+触发的事件依次为: upgradeneeded、 success。
+
+我猜测，https://pc-play.games.dmm.com/play/flower域名做了重定向，实际上源代码位于云端https://dugrqaqinbtcq.cloudfront.net，
+所以js创建的IndexedDB数据库源也是https://dugrqaqinbtcq.cloudfront.net
+
+尝试了很多办法，比如直接访问https://dugrqaqinbtcq.cloudfront.net：不行，这样不会存在IndexedDB数据库，因为IndexedDB数据库是
+通过index.js创建，而不是像平时一样能够直接请求获取。
+或是将https://pc-play.games.dmm.com/下的js丢到https://dugrqaqinbtcq.cloudfront.net下，尝试在https://dugrqaqinbtcq.cloudfront.net
+域名下通过index.js创建IndexedDB数据库：乱来，index.js也依赖于其他js，靠这种思路不知道弄到猴年马月
+
+最后通过以下办法成功访问到https://dugrqaqinbtcq.cloudfront.net域名下的IndexedDB数据库：
+打开https://pc-play.games.dmm.com/play/flower；
+F12打开开发者工具，点击“源代码/来源”；
+点击“网页”，找到pc-play.games.dmm.com的index.js；
+右击，选择“替换内容”，选择一个本地的文件夹存放替换的文件，之后会跳转到“替换”，在“替换中”的index.js的最后输入以下代码：
+  
+function setDataToDef() {
+  const dbName = 'FTbKTVUXG3ZaGMBY'
+  const tableName = 'cache'
+  const key = 'allMasterData'
+  const connection = indexedDB.open(dbName, 1);
+  console.log(connection)
+  connection.onsuccess = e => {
+  	console.log(e)
+    const db = e.target.result
+
+    console.log(db)
+
+    console.log("数据库操作成功！");
+
+    console.log(db.objectStoreNames)
+
+    db.transaction(tableName).objectStore(tableName).get(key).onsuccess = function(event) {
+      window.def = event.target.result
+      console.log(typeof(window.def))
+      console.log(window.def)
+      console.log(window.def.data)
+      window.charaData = purify(window.def.data.masterCharacter)
+        // copy(JSON.stringify(window.charaData))
+      console.log(JSON.stringify(window.charaData))
+    };
+  }
+}
+
+  setDataToDef()
+
+  function purify(charaData) {
+    return charaData.split('\n').map(s => ({ id: +s.split(',')[0], name: s.split(',')[53]?.replaceAll('"', ''), star: +s.split(',')[6] }))
+      .filter(s => s.id > 100000)
+      .filter(s => s.id < 108001 || s.id > 109959) // 排除108001-109959区间
+      .filter(s => s.id < 700001) // 排除害虫等id
+      .filter(s => s.id > 410000 || s.id < 200000)
+      .filter(s => s.id % 2 != 0)
+      .filter(s => s.star > 1) // 过滤掉star为1的，未实装形态
+}
+  console.log(JSON.stringify(window.def))
+  window.charaData = purify(window.def.data.masterCharacter)
+
+最后一行不要删掉，不懂为什么，要后面报错前面的代码才能够正常访问IndexedDB数据库；
+勾选“启动本地替换”，刷新页面等待一会儿，charaData就在控制台打印出来了！(js脚本似乎用不了copy函数)
+
+
+总结一下就是，通过本地文件替换源代码的方式，将代码“注入”到https://dugrqaqinbtcq.cloudfront.net域名下，
+从而成功访问到https://dugrqaqinbtcq.cloudfront.net域名下的IndexedDB数据库，本质上并没有绕过同源策略限制，只是了个取巧。
