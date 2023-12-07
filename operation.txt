@@ -16,7 +16,7 @@ function setDataToDef() {
 setDataToDef()
 
 function purify(charaData) {
-  return charaData.split('\n').map(s => ({ id: +s.split(',')[0], name: s.split(',')[5]?.replaceAll('"', ''), star: +s.split(',')[7] }))
+  return charaData.split('\n').map(s => ({ id: +s.split(',')[0], name: s.split(',')[53]?.replaceAll('"', ''), star: +s.split(',')[6] }))
     .filter(s => s.id > 110000)
     .filter(s => s.id < 108001 || s.id > 109959) // 排除108001-109959区间
     .filter(s => s.id < 700001) // 排除害虫等id
