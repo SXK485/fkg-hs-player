@@ -18,11 +18,14 @@ setDataToDef()
 function purify(charaData) {
   return charaData.split('\n').map(s => ({ id: +s.split(',')[0], name: s.split(',')[5]?.replaceAll('"', ''), star: +s.split(',')[7] }))
     .filter(s => s.id > 110000)
+    .filter(s => s.id < 108001 || s.id > 109959) // 排除108001-109959区间
+    .filter(s => s.id < 700001) // 排除害虫等id
     .filter(s => s.id > 410000 || s.id < 200000)
     .filter(s => s.id % 2 != 0)
+    .filter(s => s.star > 1) // 过滤掉star为1的，未实装形态
 }
 
-window.charaData = purify(window,def.data.masterCharacter)
+window.charaData = purify(window.def.data.masterCharacter)
 copy(JSON.stringify(window.charaData))
 
 And then copy these data into dist/data.json's charaData.
