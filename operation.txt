@@ -15,17 +15,43 @@ function setDataToDef() {
 
 setDataToDef()
 
-function purify(charaData) {
-  return charaData.split('\n').map(s => ({ id: +s.split(',')[0], name: s.split(',')[53]?.replaceAll('"', ''), star: +s.split(',')[6] }))
+function purify(charaData, masterBookData) {
+  const masterBook = masterBookData.split('\n').map(s => {
+    const record = s.split(',')
+    const bookId = +record[2]
+    const secondSceneOpenFlag = 0 != +record[6]
+    return { bookId, secondSceneOpenFlag }
+  })
+
+  return charaData.split('\n').map(s => {
+    const id = +s.split(',')[0]
+    const name = s.split(',')[53]?.replaceAll('"', '')
+    const star = +s.split(',')[6]
+    const bookId = +s.split(',')[4]
+    return { 
+      id, 
+      name, 
+      star, 
+      bookId 
+    }
+  })
     .filter(s => s.id > 100000)
-    .filter(s => s.id < 108001 || s.id > 109959) // 排除108001-109959区间
-    .filter(s => s.id < 700001) // 排除害虫等id
+    .filter(s => s.id < 108001 || s.id > 109959)  // 排除108001-109959区间
+    .filter(s => s.id < 700001)  // 排除害虫等id
     .filter(s => s.id > 410000 || s.id < 200000)
     .filter(s => s.id % 2 != 0)
-    .filter(s => s.star > 1) // 过滤掉star为1的，未实装形态
+    .filter(s => s.star > 1)  // 过滤掉star为1的，未实装形态
+    .filter(s => {
+      const book = masterBook.find(b => b.bookId === s.bookId)
+      return s.id < 400000 || (book && book.secondSceneOpenFlag)
+    })  // 过滤掉开花场景未实装的角色
+    .map(s => {
+      const {bookId, ...rest} = s; // 将bookId从对象中移除
+      return rest;
+    })
 }
 
-window.charaData = purify(window.def.data.masterCharacter)
+window.charaData = purify(window.def.data.masterCharacter, window.def.data.masterCharacterBook)
 copy(JSON.stringify(window.charaData))
 
 And then copy these data into dist/data.json's charaData.
